@@ -68,3 +68,23 @@ func (b *Broker) GetTopics() map[string]*Topic {
 
 	return b.topics
 }
+
+func (b *Broker) Subscribe(consumer *Consumer, topic string) error {
+	t, err := b.GetTopic(topic)
+
+	if err != nil {
+		return errors.New("topic not found")
+	}
+
+	return consumer.Subscribe(t)
+}
+
+func (b *Broker) Publish(producer *Producer, topic string, message *Message) error {
+	t, err := b.GetTopic(topic)
+
+	if err != nil {
+		return errors.New("topic not found")
+	}
+
+	return producer.Publish(t.name, message)
+}

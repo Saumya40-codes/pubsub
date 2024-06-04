@@ -3,6 +3,7 @@ package core_pubsub
 import (
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -54,4 +55,43 @@ func (c *Consumer) Subscribe(topic *Topic) error {
 	}
 
 	return nil
+}
+
+func (c *Consumer) Unsubscribe(topic *Topic) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for _, t := range c.topics {
+		if t == topic.name {
+			delete(c.partitions, t)
+			return nil
+		}
+	}
+
+	return errors.New("topic not found")
+}
+
+func (c *Consumer) Deactivate() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.active = false
+	close(c.messages)
+}
+
+func (c *Consumer) Run() {
+	for {
+		if msg, ok := <-c.messages; ok {
+			// process the message
+			fmt.Printf("Consumer %s received message: %s\n", c.id, msg.data)
+		}
+	}
+}
+
+func (c *Consumer) OnMessage(msg *Message) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.active {
+		c.messages <- msg
+	}
 }
