@@ -1,4 +1,4 @@
-package message
+package core_pubsub
 
 type Message struct {
 	topic string
