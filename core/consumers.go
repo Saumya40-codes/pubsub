@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"math/big"
 	"sync"
 )
 
@@ -29,18 +30,6 @@ func CreateConsumer(topic string, groupId string) *Consumer {
 	}
 }
 
-func generateConsumerId() string {
-	bufb := make([]byte, 10)
-
-	_, err := rand.Read(bufb)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return "sub_" + string(bufb)
-}
-
 func (c *Consumer) Subscribe(consumer *Consumer, topic string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -53,14 +42,17 @@ func (c *Consumer) Subscribe(consumer *Consumer, topic string) error {
 		return errors.New("topic not found")
 	}
 
-	// if t.partitions < len(t.consumers)+1 {
-	// 	return errors.New("all partitions are already assigned")
-	// }
+	consumerinTopic := t.getConsumerByGroupId(c.groupId)
 
-	assignedPartitions := t.AddConsumer(c)
+	if len(consumerinTopic)+1 > t.partitions {
+		fmt.Println("No partitions available for consumer group: ", c.groupId)
+		t.consumers = append(t.consumers, c)
+	} else {
+		assignedPartitions := t.AddConsumer(c)
 
-	if len(assignedPartitions) == 0 {
-		return errors.New("no partitions assigned")
+		if len(assignedPartitions) == 0 {
+			fmt.Println("No partitions assigned to consumer: ", c.id)
+		}
 	}
 
 	return nil
@@ -91,7 +83,7 @@ func (c *Consumer) Run() {
 	for {
 		if msg, ok := <-c.messages; ok {
 			// process the message
-			fmt.Printf("Consumer %s received message: %s \n with groupId: %s", c.id, msg.data, c.groupId)
+			fmt.Printf("Consumer %s with groupId: %s, received message: %s\n", c.id, c.groupId, msg.data)
 		}
 	}
 }
@@ -103,4 +95,19 @@ func (c *Consumer) OnMessage(msg *Message) {
 	if c.active {
 		c.messages <- msg
 	}
+}
+
+func generateConsumerId() string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	b := make([]byte, 10)
+	for i := range b {
+		max := big.NewInt(int64(len(charset)))
+		r, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			panic(err)
+		}
+		b[i] = charset[r.Int64()]
+	}
+
+	return "sub_" + string(b)
 }

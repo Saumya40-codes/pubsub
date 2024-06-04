@@ -1,7 +1,6 @@
 package core_pubsub
 
 import (
-	"fmt"
 	"math"
 	"sync"
 )
@@ -39,14 +38,18 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 			partitionIndex = append(partitionIndex, i)
 		}
 
-		fmt.Println("partitionIndex: ", partitionIndex)
+		// fmt.Println("partitionIndex: ", partitionIndex)
 
 		c.partitions[t.Name] = partitionIndex
 		return partitionIndex
 	}
 
-	partitionToFirstConsumer := math.Ceil(float64(t.partitions) / float64(len(consumerGroup)))
-	partitionToOtherConsumer := (float64(t.partitions) / float64(len(consumerGroup)))
+	partitionToFirstConsumer := math.Ceil(float64(t.partitions) / float64(math.Max(float64(len(consumerGroup)), float64(t.partitions))))
+	partitionToOtherConsumer := (float64(t.partitions) / float64(math.Max(float64(len(consumerGroup)), float64(t.partitions))))
+
+	// fmt.Println("partitionToFirstConsumer: ", partitionToFirstConsumer)
+	// fmt.Println("partitionToOtherConsumer: ", partitionToOtherConsumer)
+	// fmt.Println("ConsumerGroup: ", consumerGroup)
 
 	var pIndex int = 0
 
@@ -69,7 +72,7 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 		consumer.partitions[t.Name] = partitionIndex
 	}
 
-	return partitionIndex
+	return c.partitions[t.Name]
 }
 
 func (t *Topic) getConsumerByGroupId(groupId string) []*Consumer {

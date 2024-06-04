@@ -8,12 +8,16 @@ import (
 )
 
 func main() {
-	// Get the broker instance (ensures only one instance)
+	var location string = "north area"
+	fmt.Println("Order received from", location)
+
+	// Creating a broker instance
 	broker := core_pubsub.GetorSetBrokerInstance()
 
-	// Create a new topic
-	topicName := "test-topic"
-	partitions := 2 // adjust partitions as needed
+	// New topic (can be many)
+	topicName := "driver-update"
+	partitions := 2 // number of partitions in the topic
+
 	newTopic, err := broker.CreateNewTopic(topicName, partitions)
 	if err != nil {
 		fmt.Println("Error creating topic:", err)
@@ -21,34 +25,16 @@ func main() {
 	}
 	fmt.Println("Created topic:", newTopic.Name)
 
-	// **Test 1: Verify topic exists after creation**
-
-	// Get the topic using the name
-	existingTopic, err := broker.GetTopic(topicName)
-	if err != nil {
-		fmt.Println("Error getting topic:", err)
-		return
-	}
-
-	if existingTopic != nil {
-		fmt.Println("Topic", topicName, "exists!")
-	} else {
-		fmt.Println("Topic", topicName, "not found (unexpected)")
-	}
-
-	// **Test 2: Simulate additional interaction (optional)**
-
-	// Create a consumer (replace with your actual logic)
-	consumer := core_pubsub.CreateConsumer(topicName, "test-group")
-	consumer1 := core_pubsub.CreateConsumer(topicName, "test-group1")
-	// consumer2 := core_pubsub.CreateConsumer(topicName, "test-group")
+	// Creating a consumer instance
+	consumer := core_pubsub.CreateConsumer(topicName, "delivery-group-near")
+	consumer1 := core_pubsub.CreateConsumer(topicName, "delivery-group-most-nearest")
+	consumer2 := core_pubsub.CreateConsumer(topicName, "delivery-group-near")
+	consumer3 := core_pubsub.CreateConsumer(topicName, "delivery-group-most-nearest")
 
 	// Simulate some delay to allow potential race conditions
 	time.Sleep(time.Second * 1)
 
-	// **Test 3: Verify topic is available for subscription (optional)**
-
-	// Subscribe the consumer to the topic (replace with your actual logic)
+	// Subscribe the consumer to the topic
 	err = consumer.Subscribe(consumer, topicName)
 	if err != nil {
 		fmt.Println("Error subscribing:", err)
@@ -61,24 +47,40 @@ func main() {
 		return
 	}
 
-	// err = consumer2.Subscribe(consumer2, topicName)
-	// if err != nil {
-	// 	fmt.Println("Error subscribing:", err)
-	// 	return
-	// }
+	err = consumer2.Subscribe(consumer2, topicName)
+	if err != nil {
+		fmt.Println("Error subscribing:", err)
+		return
+	}
 
-	fmt.Println("Consumer subscribed to", topicName)
+	err = consumer3.Subscribe(consumer3, topicName)
+	if err != nil {
+		fmt.Println("Error subscribing:", err)
+		return
+	}
 
-	// Run the consumer in a separate goroutine (replace with your actual logic)
+	fmt.Println("Consumers subscribed to", topicName)
+
 	go consumer.Run()
-
 	go consumer1.Run()
+	go consumer2.Run()
+	go consumer3.Run()
 
-	// Wait for some time to allow potential message processing (optional)
-	producer := core_pubsub.CreateProducer("test-producer")
-	message := core_pubsub.CreateMessage(topicName, "test-message", 0)
+	// creating a producer instance
+	producer := core_pubsub.CreateProducer("food-update-producer")
+	// consider partitioning based on location
+	// say partition 0 for north area and partition 1 for south area
 
-	// Publish a message to the topic (replace with your actual logic)
+	// Create a message to publish
+	var partitionIndex int
+	if location == "north area" {
+		partitionIndex = 0
+	} else {
+		partitionIndex = 1
+	}
+	message := core_pubsub.CreateMessage(topicName, "order preparation has started", partitionIndex)
+
+	// Publishing a message to the topic
 	err = producer.Publish(topicName, message)
 
 	if err != nil {
@@ -88,10 +90,9 @@ func main() {
 
 	fmt.Println("Published message to", topicName)
 
-	// Wait for some time to allow potential message processing (optional)
+	// Waiting for some time to allow potential message processing
 	time.Sleep(time.Second * 1)
 
-	// Unsubscribe and close the consumer (replace with your actual logic)
-	consumer.Unsubscribe(existingTopic)
-	consumer.Deactivate()
+	// consumer.Unsubscribe(existingTopic)
+	// consumer.Deactivate()
 }

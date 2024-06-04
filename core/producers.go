@@ -40,7 +40,6 @@ func (p *Producer) Publish(topic string, message *Message) error {
 
 		for _, p := range partition {
 			if p == message.partition {
-				consumer.messages <- message
 				consumer.OnMessage(message)
 				break
 			}
