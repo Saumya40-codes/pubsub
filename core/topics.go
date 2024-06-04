@@ -1,12 +1,13 @@
 package core_pubsub
 
 import (
+	"fmt"
 	"math"
 	"sync"
 )
 
 type Topic struct {
-	name       string
+	Name       string
 	partitions int
 	consumers  []*Consumer
 	mu         sync.RWMutex
@@ -14,7 +15,7 @@ type Topic struct {
 
 func CreateTopic(name string, partitions int) *Topic {
 	return &Topic{
-		name:       name,
+		Name:       name,
 		partitions: partitions,
 		consumers:  make([]*Consumer, 0),
 		mu:         sync.RWMutex{},
@@ -38,7 +39,9 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 			partitionIndex = append(partitionIndex, i)
 		}
 
-		c.partitions[t.name] = partitionIndex
+		fmt.Println("partitionIndex: ", partitionIndex)
+
+		c.partitions[t.Name] = partitionIndex
 		return partitionIndex
 	}
 
@@ -63,7 +66,7 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 			}
 		}
 
-		consumer.partitions[t.name] = partitionIndex
+		consumer.partitions[t.Name] = partitionIndex
 	}
 
 	return partitionIndex

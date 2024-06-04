@@ -17,14 +17,15 @@ type Consumer struct {
 	mu         sync.RWMutex
 }
 
-func CreateConsumer(id string, topic string, groupId string) *Consumer {
+func CreateConsumer(topic string, groupId string) *Consumer {
 	return &Consumer{
-		id:       generateConsumerId(),
-		groupId:  groupId,
-		topics:   []string{topic},
-		active:   true,
-		messages: make(chan *Message, 100),
-		mu:       sync.RWMutex{},
+		id:         generateConsumerId(),
+		groupId:    groupId,
+		topics:     []string{topic},
+		active:     true,
+		messages:   make(chan *Message, 100),
+		partitions: map[string][]int{},
+		mu:         sync.RWMutex{},
 	}
 }
 
@@ -40,15 +41,23 @@ func generateConsumerId() string {
 	return "sub_" + string(bufb)
 }
 
-func (c *Consumer) Subscribe(topic *Topic) error {
+func (c *Consumer) Subscribe(consumer *Consumer, topic string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if topic.partitions < len(topic.consumers)+1 {
-		return errors.New("all partitions are already assigned")
+	broker := GetorSetBrokerInstance()
+
+	t, err := broker.GetTopic(topic)
+
+	if err != nil {
+		return errors.New("topic not found")
 	}
 
-	assignedPartitions := topic.AddConsumer(c)
+	// if t.partitions < len(t.consumers)+1 {
+	// 	return errors.New("all partitions are already assigned")
+	// }
+
+	assignedPartitions := t.AddConsumer(c)
 
 	if len(assignedPartitions) == 0 {
 		return errors.New("no partitions assigned")
@@ -62,7 +71,7 @@ func (c *Consumer) Unsubscribe(topic *Topic) error {
 	defer c.mu.Unlock()
 
 	for _, t := range c.topics {
-		if t == topic.name {
+		if t == topic.Name {
 			delete(c.partitions, t)
 			return nil
 		}
@@ -82,7 +91,7 @@ func (c *Consumer) Run() {
 	for {
 		if msg, ok := <-c.messages; ok {
 			// process the message
-			fmt.Printf("Consumer %s received message: %s\n", c.id, msg.data)
+			fmt.Printf("Consumer %s received message: %s \n with groupId: %s", c.id, msg.data, c.groupId)
 		}
 	}
 }
