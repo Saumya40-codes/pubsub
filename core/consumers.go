@@ -11,7 +11,7 @@ type Consumer struct {
 	topics     []string
 	active     bool
 	messages   chan *Message
-	partitions map[string]int
+	partitions map[string][]int
 	mu         sync.RWMutex
 }
 
@@ -36,4 +36,11 @@ func generateConsumerId() string {
 	}
 
 	return "sub_" + string(bufb)
+}
+
+func (c *Consumer) Subscribe(topic string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.topics = append(c.topics, topic)
 }
