@@ -38,6 +38,7 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 			partitionIndex = append(partitionIndex, i)
 		}
 
+		c.partitions[t.name] = partitionIndex
 		return partitionIndex
 	}
 

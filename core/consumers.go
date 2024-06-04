@@ -2,6 +2,7 @@ package core_pubsub
 
 import (
 	"crypto/rand"
+	"errors"
 	"sync"
 )
 
@@ -38,9 +39,19 @@ func generateConsumerId() string {
 	return "sub_" + string(bufb)
 }
 
-func (c *Consumer) Subscribe(topic string) {
+func (c *Consumer) Subscribe(topic *Topic) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.topics = append(c.topics, topic)
+	if topic.partitions < len(topic.consumers)+1 {
+		return errors.New("all partitions are already assigned")
+	}
+
+	assignedPartitions := topic.AddConsumer(c)
+
+	if len(assignedPartitions) == 0 {
+		return errors.New("no partitions assigned")
+	}
+
+	return nil
 }
