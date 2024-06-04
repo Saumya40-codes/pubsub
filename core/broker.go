@@ -10,11 +10,19 @@ type Broker struct {
 	mu     sync.RWMutex
 }
 
-func CreateBroker() *Broker {
-	return &Broker{
-		topics: make(map[string]*Topic),
-		mu:     sync.RWMutex{},
-	}
+var brokerInstance *Broker
+var once sync.Once
+
+// this will make sure that only one broker instance is created
+// if called multiple times, it will return the same instance
+func GetorSetBrokerInstance() *Broker {
+	once.Do(func() {
+		brokerInstance = &Broker{
+			topics: make(map[string]*Topic),
+			mu:     sync.RWMutex{},
+		}
+	})
+	return brokerInstance
 }
 
 func (b *Broker) CreateNewTopic(name string, partitions int) (*Topic, error) {
