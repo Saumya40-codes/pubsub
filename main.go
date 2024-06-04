@@ -9,90 +9,81 @@ import (
 
 func main() {
 	var location string = "north area"
-	fmt.Println("Order received from", location)
+	fmt.Println("Order received")
 
 	// Creating a broker instance
 	broker := core_pubsub.GetorSetBrokerInstance()
 
-	// New topic (can be many)
-	topicName := "driver-update"
-	partitions := 2 // number of partitions in the topic
-
-	newTopic, err := broker.CreateNewTopic(topicName, partitions)
-	if err != nil {
-		fmt.Println("Error creating topic:", err)
-		return
+	// Defining topics and partitions
+	topics := map[string]int{
+		"driver-update":     2,
+		"food-update":       3,
+		"order-update":      2,
+		"customer-feedback": 1,
 	}
-	fmt.Println("Created topic:", newTopic.Name)
 
-	// Creating a consumer instance
-	consumer := core_pubsub.CreateConsumer(topicName, "delivery-group-near")
-	consumer1 := core_pubsub.CreateConsumer(topicName, "delivery-group-most-nearest")
-	consumer2 := core_pubsub.CreateConsumer(topicName, "delivery-group-near")
-	consumer3 := core_pubsub.CreateConsumer(topicName, "delivery-group-most-nearest")
+	// Creating topics
+	for topicName, partitions := range topics {
+		newTopic, err := broker.CreateNewTopic(topicName, partitions)
+		if err != nil {
+			fmt.Println("Error creating topic:", err)
+			continue
+		}
+		fmt.Println("Created topic:", newTopic.Name)
+	}
+
+	// Create consumers and subscribe them to topics
+	consumerGroups := map[string][]string{
+		"driver-update":     {"delivery-group-near", "delivery-group-most-nearest"},
+		"food-update":       {"kitchen-group-main", "kitchen-group-backup"},
+		"order-update":      {"order-management", "order-tracking"},
+		"customer-feedback": {"feedback-analysis"},
+	}
+
+	for topicName, groups := range consumerGroups {
+		for _, group := range groups {
+			consumer := core_pubsub.CreateConsumer(topicName, group)
+			err := consumer.Subscribe(consumer, topicName)
+			if err != nil {
+				fmt.Println("Error subscribing:", err)
+				continue
+			}
+			go consumer.Run()
+			fmt.Println("Consumer group", group, "subscribed to", topicName)
+		}
+	}
 
 	// Simulate some delay to allow potential race conditions
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 4)
 
-	// Subscribe the consumer to the topic
-	err = consumer.Subscribe(consumer, topicName)
-	if err != nil {
-		fmt.Println("Error subscribing:", err)
-		return
+	// Create producers and publish messages
+	producers := map[string]string{
+		"food-update-producer":       "food-update",
+		"driver-update-producer":     "driver-update",
+		"order-update-producer":      "order-update",
+		"customer-feedback-producer": "customer-feedback",
 	}
 
-	err = consumer1.Subscribe(consumer1, topicName)
-	if err != nil {
-		fmt.Println("Error subscribing:", err)
-		return
+	for producerName, topicName := range producers {
+		producer := core_pubsub.CreateProducer(producerName)
+
+		// Create and publish a message
+		var partitionIndex int
+		if location == "north area" {
+			partitionIndex = 0
+		} else {
+			partitionIndex = 1
+		}
+		message := core_pubsub.CreateMessage(topicName, "Message regarding "+topicName, partitionIndex)
+
+		err := producer.Publish(topicName, message)
+		if err != nil {
+			fmt.Println("Error publishing message:", err)
+			continue
+		}
+		fmt.Println("Published message to", topicName)
 	}
-
-	err = consumer2.Subscribe(consumer2, topicName)
-	if err != nil {
-		fmt.Println("Error subscribing:", err)
-		return
-	}
-
-	err = consumer3.Subscribe(consumer3, topicName)
-	if err != nil {
-		fmt.Println("Error subscribing:", err)
-		return
-	}
-
-	fmt.Println("Consumers subscribed to", topicName)
-
-	go consumer.Run()
-	go consumer1.Run()
-	go consumer2.Run()
-	go consumer3.Run()
-
-	// creating a producer instance
-	producer := core_pubsub.CreateProducer("food-update-producer")
-	// consider partitioning based on location
-	// say partition 0 for north area and partition 1 for south area
-
-	// Create a message to publish
-	var partitionIndex int
-	if location == "north area" {
-		partitionIndex = 0
-	} else {
-		partitionIndex = 1
-	}
-	message := core_pubsub.CreateMessage(topicName, "order preparation has started", partitionIndex)
-
-	// Publishing a message to the topic
-	err = producer.Publish(topicName, message)
-
-	if err != nil {
-		fmt.Println("Error publishing message:", err)
-		return
-	}
-
-	fmt.Println("Published message to", topicName)
 
 	// Waiting for some time to allow potential message processing
-	time.Sleep(time.Second * 1)
-
-	// consumer.Unsubscribe(existingTopic)
-	// consumer.Deactivate()
+	time.Sleep(time.Second * 3)
 }
