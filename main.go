@@ -2,24 +2,24 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	core_pubsub "github.com/Saumya40-codes/pubsub/core"
 )
 
 func main() {
-	var location string = "north area"
-	fmt.Println("Order received")
+	fmt.Println("Stock Monitoring System")
 
 	// Creating a broker instance
 	broker := core_pubsub.GetorSetBrokerInstance()
 
 	// Defining topics and partitions
 	topics := map[string]int{
-		"driver-update":     2,
-		"food-update":       3,
-		"order-update":      2,
-		"customer-feedback": 1,
+		"stock-price-update": 3,
+		"stock-news-update":  2,
+		"trade-execution":    2,
+		"portfolio-update":   1,
 	}
 
 	// Creating topics
@@ -34,10 +34,10 @@ func main() {
 
 	// Create consumers and subscribe them to topics
 	consumerGroups := map[string][]string{
-		"driver-update":     {"delivery-group-near", "delivery-group-most-nearest"},
-		"food-update":       {"kitchen-group-main", "kitchen-group-backup"},
-		"order-update":      {"order-management", "order-tracking"},
-		"customer-feedback": {"feedback-analysis"},
+		"stock-price-update": {"price-analyzer", "alert-generator"},
+		"stock-news-update":  {"news-aggregator", "sentiment-analyzer"},
+		"trade-execution":    {"trade-processor", "order-verifier"},
+		"portfolio-update":   {"portfolio-manager"},
 	}
 
 	for topicName, groups := range consumerGroups {
@@ -49,7 +49,10 @@ func main() {
 				continue
 			}
 			go consumer.Run()
+
+			fmt.Println("==============SUBSCRIBE=======================")
 			fmt.Println("Consumer group", group, "subscribed to", topicName)
+			fmt.Println("=============================================")
 		}
 	}
 
@@ -58,32 +61,39 @@ func main() {
 
 	// Create producers and publish messages
 	producers := map[string]string{
-		"food-update-producer":       "food-update",
-		"driver-update-producer":     "driver-update",
-		"order-update-producer":      "order-update",
-		"customer-feedback-producer": "customer-feedback",
+		"stock-price-update-producer": "stock-price-update",
+		"stock-news-update-producer":  "stock-news-update",
+		"trade-execution-producer":    "trade-execution",
+		"portfolio-update-producer":   "portfolio-update",
 	}
 
 	for producerName, topicName := range producers {
 		producer := core_pubsub.CreateProducer(producerName)
 
-		// Create and publish a message
-		var partitionIndex int
-		if location == "north area" {
-			partitionIndex = 0
-		} else {
-			partitionIndex = 1
-		}
-		message := core_pubsub.CreateMessage(topicName, "Message regarding "+topicName, partitionIndex)
+		go func(topicName string, producerName string) {
+			for {
+				// Create and publish a message
+				var partitionIndex int = rand.Intn(topics[topicName])
 
-		err := producer.Publish(topicName, message)
-		if err != nil {
-			fmt.Println("Error publishing message:", err)
-			continue
-		}
-		fmt.Println("Published message to", topicName)
+				messageContent := fmt.Sprintf("Message regarding %s from %s", topicName, producerName)
+				message := core_pubsub.CreateMessage(topicName, messageContent, partitionIndex)
+
+				err := producer.Publish(topicName, message)
+				if err != nil {
+					fmt.Println("Error publishing message:", err)
+					continue
+				}
+
+				fmt.Println("==============PUBLISH=======================")
+				fmt.Println("Published message to", topicName)
+				fmt.Println("============================================")
+
+				// Simulate a delay between messages
+				time.Sleep(time.Second * 4)
+			}
+		}(topicName, producerName)
 	}
 
-	// Waiting for some time to allow potential message processing
-	time.Sleep(time.Second * 3)
+	// Prevent the main function from exiting immediately
+	select {}
 }
