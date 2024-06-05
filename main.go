@@ -91,9 +91,7 @@ func main() {
 					continue
 				}
 
-				fmt.Println("==============PUBLISH=======================")
-				fmt.Println("Published message to", topicName)
-				fmt.Println("============================================")
+				fmt.Println("==============PUBLISH=======================\n", "Published message to", topicName, "\n============================================")
 
 				// Simulate a delay between messages
 				time.Sleep(time.Second * 4)
