@@ -13,6 +13,65 @@ Some of the main components involved:
 
 ![arch](https://github.com/Saumya40-codes/pubsub/assets/115284013/f71c763e-0bbd-4ef3-90a4-557404573de9)
 
+### Some main functions
+
+**Installation**
+On terminal using go
+```
+go get github.com/Saumya40-codes/pubsub/core
+```
+
+*Some functions*:
+
+Create a broker instance
+
+```
+broker := core_pubsub.GetorSetBrokerInstance()
+```
+
+Create new topic
+
+```
+newTopic, err := broker.CreateNewTopic(topicName, No_of_partitions)
+```
+
+Create a new consumer
+```
+consumer := core_pubsub.CreateConsumer(name, topicName, groupId)
+```
+
+Subscribe to a topic
+
+```
+err := consumer.Subscribe(consumer, topicName)
+```
+
+Listen for any change in subscribed topic
+
+```
+consumer.Run()
+```
+
+Create producer
+
+```
+producer := core_pubsub.CreateProducer(producerName)
+```
+
+Create a message to be sent
+
+```
+message := core_pubsub.CreateMessage(topicName, messageContent, partitionIndex)
+```
+
+Publish the message
+
+```
+err := producer.Publish(topicName, message)
+```
+
+You can refer more: [here](https://github.com/Saumya40-codes/pubsub/blob/master/main.go)
+
 ## Use case/example
 
 Consider following simple stock prediction architecture
@@ -21,3 +80,13 @@ Consider following simple stock prediction architecture
 
 Now only those consumer will receive message who are subscribed to particular partition in a topic to which consumer is sending message to. 
 On new consumer, auto load-balancing occurs (if existing consumer has more then one partiton)
+
+**Output/Execution**:
+Creating topics, consumer and subscribing them to relavant topics 
+
+![image](https://github.com/Saumya40-codes/pubsub/assets/115284013/a44fcdf9-3652-4770-a35d-b00e2d45f8d6)
+
+Publishing of messages by producer and consumer receiving it (here order might be deferring as processes are running concurrently)
+
+![image](https://github.com/Saumya40-codes/pubsub/assets/115284013/891a7291-849e-4010-b958-9c92b2545e00)
+
