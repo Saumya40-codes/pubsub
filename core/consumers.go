@@ -54,7 +54,7 @@ func (c *Consumer) Subscribe(consumer *Consumer, topic string) error {
 			fmt.Println("No partitions assigned to consumer: ", c.id)
 		}
 
-		fmt.Println("Consumer: ", c.id, " assigned partitions: ", assignedPartitions, "on topic: ", t.Name)
+		// fmt.Println("Consumer: ", c.id, " assigned partitions: ", assignedPartitions, "on topic: ", t.Name)
 	}
 
 	return nil

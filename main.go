@@ -33,6 +33,8 @@ func main() {
 		fmt.Println("Created topic:", newTopic.Name)
 	}
 
+	fmt.Println("\n")
+
 	// Create consumers and subscribe them to topics
 	consumerGroups := map[string][]string{
 		"stock-price-update": {"price-analyzer", "alert-generator"},

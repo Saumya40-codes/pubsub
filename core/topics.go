@@ -46,8 +46,8 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 		return partitionIndex
 	}
 
-	partitionToFirstConsumer := math.Ceil(float64(t.partitions) / float64(math.Max(float64(len(consumerGroup)), float64(t.partitions))))
-	partitionToOtherConsumer := (float64(t.partitions) / float64(math.Max(float64(len(consumerGroup)), float64(t.partitions))))
+	partitionToFirstConsumer := math.Ceil(float64(t.partitions) / float64(math.Min(float64(len(consumerGroup)), float64(t.partitions))))
+	partitionToOtherConsumer := (float64(t.partitions) / float64(math.Min(float64(len(consumerGroup)), float64(t.partitions))))
 
 	// fmt.Println("partitionToFirstConsumer: ", partitionToFirstConsumer)
 	// fmt.Println("partitionToOtherConsumer: ", partitionToOtherConsumer)
