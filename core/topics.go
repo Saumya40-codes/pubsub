@@ -32,6 +32,8 @@ func (t *Topic) AddConsumer(c *Consumer) (partitionIndex []int) {
 	t.consumers = append(t.consumers, c)
 	consumerGroup = append(consumerGroup, c)
 
+	// fmt.Println("ConsumerGroup: ", consumerGroup)
+
 	if len(consumerGroup) == 1 {
 
 		for i := 0; i < t.partitions; i++ {

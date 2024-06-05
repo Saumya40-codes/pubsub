@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	core_pubsub "github.com/Saumya40-codes/pubsub/core"
@@ -40,9 +41,11 @@ func main() {
 		"portfolio-update":   {"portfolio-manager"},
 	}
 
+	var groupId int = 0
+
 	for topicName, groups := range consumerGroups {
-		for _, group := range groups {
-			consumer := core_pubsub.CreateConsumer(topicName, group)
+		for _, name := range groups {
+			consumer := core_pubsub.CreateConsumer(name, topicName, strconv.Itoa(groupId))
 			err := consumer.Subscribe(consumer, topicName)
 			if err != nil {
 				fmt.Println("Error subscribing:", err)
@@ -51,9 +54,11 @@ func main() {
 			go consumer.Run()
 
 			fmt.Println("==============SUBSCRIBE=======================")
-			fmt.Println("Consumer group", group, "subscribed to", topicName)
+			fmt.Printf("Consumer %s in Consumer Group %d subscribed to %s\n", name, groupId, topicName)
 			fmt.Println("=============================================")
 		}
+
+		groupId++
 	}
 
 	// Simulate some delay to allow potential race conditions
@@ -73,7 +78,7 @@ func main() {
 		go func(topicName string, producerName string) {
 			for {
 				// Create and publish a message
-				var partitionIndex int = rand.Intn(topics[topicName])
+				var partitionIndex int = rand.Intn(topics[topicName]) // randomly select a partition
 
 				messageContent := fmt.Sprintf("Message regarding %s from %s", topicName, producerName)
 				message := core_pubsub.CreateMessage(topicName, messageContent, partitionIndex)

@@ -18,9 +18,9 @@ type Consumer struct {
 	mu         sync.RWMutex
 }
 
-func CreateConsumer(topic string, groupId string) *Consumer {
+func CreateConsumer(name string, topic string, groupId string) *Consumer {
 	return &Consumer{
-		id:         generateConsumerId(),
+		id:         name + "_" + generateConsumerId(),
 		groupId:    groupId,
 		topics:     []string{topic},
 		active:     true,
@@ -53,6 +53,8 @@ func (c *Consumer) Subscribe(consumer *Consumer, topic string) error {
 		if len(assignedPartitions) == 0 {
 			fmt.Println("No partitions assigned to consumer: ", c.id)
 		}
+
+		fmt.Println("Consumer: ", c.id, " assigned partitions: ", assignedPartitions, "on topic: ", t.Name)
 	}
 
 	return nil
@@ -109,5 +111,5 @@ func generateConsumerId() string {
 		b[i] = charset[r.Int64()]
 	}
 
-	return "sub_" + string(b)
+	return string(b)
 }
