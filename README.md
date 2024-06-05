@@ -18,8 +18,10 @@ Some of the main components involved:
 **Installation**
 On terminal using go
 ```
-go get github.com/Saumya40-codes/pubsub/core
+go get github.com/Saumya40-codes/pubsub
 ```
+
+import *core_pubsub "github.com/Saumya40-codes/pubsub/core"*   [if it doesn't get automatically while going through below procedure]
 
 *Some functions*:
 
