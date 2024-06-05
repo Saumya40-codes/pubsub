@@ -25,6 +25,7 @@ func GetorSetBrokerInstance() *Broker {
 	return brokerInstance
 }
 
+// Creates a new Topic
 func (b *Broker) CreateNewTopic(name string, partitions int) (*Topic, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -39,6 +40,7 @@ func (b *Broker) CreateNewTopic(name string, partitions int) (*Topic, error) {
 	return topic, nil
 }
 
+// gets the instance of a topic specified if found
 func (b *Broker) GetTopic(name string) (*Topic, error) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
@@ -62,6 +64,7 @@ func (b *Broker) DeleteTopic(name string) error {
 	return errors.New("topic not found")
 }
 
+// returns all currently existing topics
 func (b *Broker) GetTopics() map[string]*Topic {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
