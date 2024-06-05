@@ -47,7 +47,7 @@ func main() {
 
 	for topicName, groups := range consumerGroups {
 		for _, name := range groups {
-			consumer := core_pubsub.CreateConsumer(name, topicName, strconv.Itoa(groupId))
+			consumer := core_pubsub.CreateConsumer(name, strconv.Itoa(groupId))
 			err := consumer.Subscribe(consumer, topicName)
 			if err != nil {
 				fmt.Println("Error subscribing:", err)

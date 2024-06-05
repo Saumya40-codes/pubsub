@@ -18,11 +18,10 @@ type Consumer struct {
 	mu         sync.RWMutex
 }
 
-func CreateConsumer(name string, topic string, groupId string) *Consumer {
+func CreateConsumer(name string, groupId string) *Consumer {
 	return &Consumer{
 		id:         name + "_" + generateConsumerId(),
 		groupId:    groupId,
-		topics:     []string{topic},
 		active:     true,
 		messages:   make(chan *Message, 100),
 		partitions: map[string][]int{},
@@ -41,6 +40,8 @@ func (c *Consumer) Subscribe(consumer *Consumer, topic string) error {
 	if err != nil {
 		return errors.New("topic not found")
 	}
+
+	c.topics = append(c.topics, topic)
 
 	consumerinTopic := t.getConsumerByGroupId(c.groupId)
 
