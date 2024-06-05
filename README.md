@@ -39,7 +39,7 @@ newTopic, err := broker.CreateNewTopic(topicName, No_of_partitions)
 
 Create a new consumer
 ```
-consumer := core_pubsub.CreateConsumer(name, topicName, groupId)
+consumer := core_pubsub.CreateConsumer(name, groupId)
 ```
 
 Subscribe to a topic
